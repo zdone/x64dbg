@@ -5,7 +5,7 @@ configuration: Release
 
 environment:
   GIT_URL: "https://github.com/x64dbg/x64dbg.git"
-  GIT_BRANCH: "master"  # 或 "development" 获取开发版
+  GIT_BRANCH: "development"  # 或 "development" 获取开发版
   QT_VERSION: "5.15.2"
   QT_COMPILER: "msvc2019_64"
 
