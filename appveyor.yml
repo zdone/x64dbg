@@ -1,0 +1,63 @@
+version: 1.0.{build}
+image: Visual Studio 2022
+platform: x64
+configuration: Release
+
+environment:
+  GIT_URL: "https://github.com/x64dbg/x64dbg.git"
+  GIT_BRANCH: "master"  # 或 "development" 获取开发版
+  QT_VERSION: "5.15.2"
+  QT_COMPILER: "msvc2019_64"
+
+install:
+  # 1. 安装必要工具
+  - choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=System'
+  - choco install -y python3
+  - choco install -y 7zip
+  - choco install -y git
+  
+  # 2. 配置Git（可选，避免可能的身份验证问题）
+  - git config --global core.autocrlf input
+  - git config --global core.symlinks true
+
+  # 3. 设置Python路径
+  - set "PATH=C:\Python38;%PATH%"
+
+  # 4. 下载并安装Qt
+  - pip install aqtinstall
+  - aqt install-qt windows desktop %QT_VERSION% %QT_COMPILER% -m qtcharts qtsvg
+  - set "QT_DIR=C:\Qt\%QT_VERSION%\%QT_COMPILER%"
+  - set "QT_BASE=%QT_DIR%"
+
+  # 5. 克隆最新的x64dbg源代码
+  - echo 正在克隆x64dbg仓库...
+  - git clone --depth 1 --branch %GIT_BRANCH% %GIT_URL% x64dbg-source
+  
+  # 6. 进入源码目录并初始化子模块
+  - cd x64dbg-source
+  - git submodule update --init --recursive --depth 1
+  - cd ..
+
+build_script:
+  # 7. 进入源码目录并运行构建脚本
+  - cd x64dbg-source
+  - echo 开始构建x64dbg...
+  - build.bat
+
+artifacts:
+  - path: x64dbg-source\release\x64\*.*
+    name: x64dbg_x64
+  - path: x64dbg-source\release\x32\*.*
+    name: x64dbg_x32
+  # 可选：打包整个release目录
+  - path: x64dbg-source\release\*.7z
+    name: x64dbg_full
+
+after_build:
+  # 8. 清理和压缩（可选）
+  - cd x64dbg-source\release
+  - 7z a x64dbg_build_%APPVEYOR_BUILD_VERSION%.7z .\* -r
+  - cd ..\..
+
+test: off
+deploy: off
